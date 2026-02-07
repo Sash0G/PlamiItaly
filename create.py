@@ -10,14 +10,13 @@ import hashlib
 INPUT_CSV = 'set5.csv'
 OUTPUT_HTML = 'index.html'
 
-# Mapping Cyrillic answers to Latin Options
 ANSWER_MAPPING = {
     'а': 'A', 'б': 'B', 'в': 'C', 'г': 'D', 'д': 'E',
     'A': 'A', 'B': 'B', 'C': 'C', 'D': 'D', 'E': 'E'
 }
 
 # -------------------------------------------------------------------------
-# 2. Parse CSV Data
+# 2. Parse CSV Data (Same Logic as Before)
 # -------------------------------------------------------------------------
 def parse_csv(filename):
     if not os.path.exists(filename):
@@ -34,9 +33,6 @@ def parse_csv(filename):
     
     for idx, row in df.iterrows():
         q_text = str(row[0]).strip()
-        
-        # --- STABLE HASHING (MD5) ---
-        # ensures ID stays same even if file order changes
         q_id = hashlib.md5(q_text.encode('utf-8')).hexdigest()
 
         options = []
@@ -66,83 +62,165 @@ questions_json = json.dumps(parse_csv(INPUT_CSV))
 print(f"Processed {len(json.loads(questions_json))} questions.")
 
 # -------------------------------------------------------------------------
-# 3. HTML Template
+# 3. HTML Template (Architecture Theme)
 # -------------------------------------------------------------------------
 html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Quiz App</title>
+    <title>Italy</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+
     <style>
-        :root {{ --primary: #007aff; --bg: #f2f2f7; --card: #ffffff; --text: #000; --border: #c6c6c8; }}
+        :root {{
+            --primary: #2c3e50;      /* Slate Blue/Grey */
+            --accent: #c0392b;       /* Terracotta Red */
+            --bg: #fdfbf7;           /* Warm Paper */
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --border: #dcdcdc;
+            --correct: #27ae60;
+            --incorrect: #c0392b;
+        }}
         
         * {{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }}
+        
         body {{ 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg); color: var(--text); 
+            font-family: 'Lato', sans-serif;
+            background-color: var(--bg);
+            background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text); 
             padding: 20px; margin: 0;
             display: flex; justify-content: center; 
+            min-height: 100vh;
         }}
         
         .container {{ 
             width: 100%; max-width: 800px; 
-            background: var(--card); 
-            padding: 25px; 
-            border-radius: 16px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+            background: var(--card-bg); 
+            padding: 40px; 
+            border: 1px solid var(--border);
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.05); /* Architectural Block Shadow */
+            position: relative;
         }}
         
-        h1, h2 {{ text-align: center; color: var(--primary); margin-top: 0; }}
+        /* Decorative Top Border */
+        .container::before {{
+            content: "";
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 6px;
+            background: var(--primary);
+        }}
+
+        h1, h2 {{ 
+            font-family: 'Playfair Display', serif; 
+            text-align: center; 
+            color: var(--primary); 
+            margin-top: 0; 
+            letter-spacing: 0.5px;
+        }}
         
-        /* Buttons (iOS style) */
+        h1 {{ font-size: 2.2em; border-bottom: 2px solid #eee; padding-bottom: 20px; }}
+        
+        /* Buttons */
         button {{ 
             background: var(--primary); color: white; border: none; 
-            padding: 14px 24px; font-size: 17px; font-weight: 600; 
-            border-radius: 12px; cursor: pointer; width: 100%; 
-            touch-action: manipulation;
-            transition: opacity 0.2s;
+            padding: 16px 24px; font-size: 16px; font-family: 'Lato', sans-serif; 
+            text-transform: uppercase; letter-spacing: 1px; font-weight: bold;
+            cursor: pointer; width: 100%; 
+            transition: all 0.2s;
+            border-radius: 2px; /* Sharper corners for architectural feel */
         }}
-        button:active {{ opacity: 0.7; }}
-        .btn-secondary {{ background: #8e8e93; margin-top: 15px; }}
+        
+        button:active {{ transform: translateY(2px); }}
+        
+        .btn-retry {{ background: var(--accent); }}
+        .btn-reset {{ 
+            background: transparent; color: #999; 
+            text-transform: none; font-weight: normal; 
+            margin-top: 30px; border: 1px dashed #ccc;
+        }}
         
         /* Inputs */
+        .input-group {{ text-align: center; margin: 40px 0; }}
         input[type="number"] {{ 
-            padding: 12px; font-size: 18px; width: 100px; 
-            text-align: center; border: 1px solid var(--border); 
-            border-radius: 8px; -webkit-appearance: none; 
+            padding: 10px; font-size: 20px; width: 100px; 
+            text-align: center; border: 2px solid var(--primary); 
+            font-family: 'Playfair Display', serif;
+            background: #fafafa;
         }}
         
-        /* Quiz List */
-        .question-block {{ margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee; }}
-        .q-text {{ font-size: 1.1em; font-weight: 600; margin-bottom: 15px; line-height: 1.4; }}
+        /* Questions */
+        .question-block {{ 
+            margin-bottom: 40px; 
+            padding-bottom: 30px; 
+            border-bottom: 1px solid #eee; 
+        }}
         
-        /* Options (Touch Friendly) */
+        .q-text {{ 
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3em; 
+            font-weight: 600; 
+            margin-bottom: 20px; 
+            line-height: 1.4; 
+            color: #000;
+        }}
+        
+        /* Options */
         .options label {{ 
             display: flex; align-items: center;
-            padding: 14px; margin: 8px 0; 
-            background: #fafafa; border: 1px solid #eee; 
-            border-radius: 10px; cursor: pointer; 
-            font-size: 16px;
-            touch-action: manipulation;
+            padding: 16px; margin: 10px 0; 
+            background: #fff; border: 1px solid #ddd; 
+            cursor: pointer; 
+            font-size: 17px;
+            transition: all 0.2s;
+            position: relative;
         }}
         
-        /* Custom Radio Indicator */
-        .options input {{ 
-            margin-right: 12px; transform: scale(1.3); accent-color: var(--primary);
-        }}
+        /* Hover/Touch State */
+        .options label:hover {{ border-color: var(--primary); background: #f8f9fa; }}
         
-        /* Selected State for feedback */
+        /* Selected State */
         .options label:has(input:checked) {{
-            background-color: #eef5ff; border-color: var(--primary);
+            background-color: #f0f4f8; 
+            border-color: var(--primary);
+            border-left: 5px solid var(--primary); /* Accent mark */
+        }}
+
+        .options input {{ 
+            margin-right: 15px; 
+            width: 20px; height: 20px;
+            accent-color: var(--primary);
         }}
 
         /* Results */
-        .result-row {{ padding: 15px; border-bottom: 1px solid #eee; }}
-        .status {{ font-weight: bold; margin-bottom: 4px; }}
-        .correct {{ color: #34c759; }}
-        .incorrect {{ color: #ff3b30; }}
-        .ans-text {{ color: #555; font-size: 0.95em; }}
+        .result-row {{ 
+            padding: 20px; 
+            background: #fdfdfd;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }}
+        
+        .status {{ 
+            font-family: 'Playfair Display', serif;
+            font-weight: bold; 
+            font-size: 1.1em;
+            margin: 10px 0; 
+        }}
+        .correct {{ color: var(--correct); }}
+        .incorrect {{ color: var(--incorrect); }}
+        
+        .ans-text {{ 
+            display: block; 
+            margin-top: 5px; 
+            color: #555; 
+            font-style: italic;
+        }}
 
         .hidden {{ display: none !important; }}
     </style>
@@ -151,35 +229,41 @@ html_content = f"""<!DOCTYPE html>
 
 <div class="container" id="app">
     <div id="start-screen">
-        <h1>Quiz Time</h1>
-        <p style="text-align:center; color:#666;">Total Questions: <span id="total-q">0</span></p>
-        
-        <div style="text-align:center; margin: 40px 0;">
-            <label for="num-q" style="display:block; margin-bottom:10px; font-weight:bold;">Questions to Practice</label>
-            <input type="number" id="num-q" value="10" min="1">
-            <br><br><br>
-            <button onclick="startQuiz(false)">Start Quiz</button>
-            <button onclick="resetData()" class="btn-secondary" style="background: transparent; color: #ff3b30; margin-top:30px; font-size:14px;">Reset Learning Progress</button>
+        <h1></h1>
+        <div class="input-group">
+            <p style="margin-bottom: 10px; color: #666;">Total Archive Size: <span id="total-q">0</span> questions</p>
+            <label for="num-q" style="display:block; margin-bottom:15px; font-weight:bold; font-size: 1.1em;">Session Length</label>
+            <input type="number" id="num-q" value="75" min="1">
+            
+            <div style="margin-top: 40px;">
+                <button onclick="startQuiz(false)">Begin Session</button>
+            </div>
+            
+            <button onclick="resetData()" class="btn-reset">Reset Academic Progress</button>
         </div>
     </div>
 
     <div id="quiz-screen" class="hidden">
-        <h2 id="round-title">Quiz</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+            <h2 id="round-title" style="margin:0; font-size: 1.5em;">Examination</h2>
+            <span style="font-size: 0.9em; color: #777;"></span>
+        </div>
+
         <div id="questions-container"></div>
+        
         <div style="padding: 20px 0;">
             <button onclick="submitQuiz()">Submit Answers</button>
         </div>
     </div>
 
     <div id="result-screen" class="hidden">
-        <h2>Results</h2>
-        <div style="text-align: center; margin-bottom: 25px;">
-            <h3 id="score-summary" style="margin-bottom:5px;"></h3>
-            <p id="retry-msg" style="color:#666; font-size:0.9em; margin-top:0;"></p>
+        <h1>Evaluation</h1>
+        <div style="text-align: center; margin-bottom: 30px; background: #f9f9f9; padding: 20px; border: 1px solid #eee;">
+            <h3 id="score-summary" style="margin: 0; font-size: 1.8em; font-family: 'Playfair Display', serif;"></h3>
+            <p id="retry-msg" style="color:#666; margin-top:10px;"></p>
         </div>
         
-        <div id="action-area" style="margin-bottom: 30px;">
-            </div>
+        <div id="action-area" style="margin-bottom: 40px;"></div>
 
         <div id="results-list"></div>
     </div>
@@ -187,12 +271,12 @@ html_content = f"""<!DOCTYPE html>
 
 <script>
     const allQuestions = {questions_json};
-    const STORAGE_KEY = 'quiz_v2_scores'; // Changed key for V2 (MD5)
+    const STORAGE_KEY = 'arch_quiz_v1';
     
     // State
     let currentQuiz = [];
     let wrongQuestions = [];
-    let isRetryMode = false; // true if we are in "Retry Wrong" phase
+    let isRetryMode = false;
 
     document.getElementById('total-q').textContent = allQuestions.length;
     document.getElementById('num-q').max = allQuestions.length;
@@ -228,14 +312,12 @@ html_content = f"""<!DOCTYPE html>
         isRetryMode = isRetry;
         
         if (!isRetry) {{
-            // FRESH START: Select Weighted
             const num = parseInt(document.getElementById('num-q').value) || 10;
             currentQuiz = selectWeightedQuestions(allQuestions, num);
-            document.getElementById('round-title').textContent = "Quiz";
+            document.getElementById('round-title').textContent = "Examination";
         }} else {{
-            // RETRY: Use the wrong questions from previous round
             currentQuiz = [...wrongQuestions];
-            document.getElementById('round-title').textContent = "Retry Incorrect";
+            document.getElementById('round-title').textContent = "Review Incorrect";
         }}
 
         renderQuiz();
@@ -281,13 +363,12 @@ html_content = f"""<!DOCTYPE html>
         container.innerHTML = '';
 
         currentQuiz.forEach((q, index) => {{
-            // Always shuffle options for display
             let displayOpts = [...q.opts];
             shuffleArray(displayOpts);
 
             let html = `
                 <div class="question-block">
-                    <div class="q-text">${{index + 1}}. ${{q.q}}</div>
+                    <div class="q-text"><span style="color:var(--primary);">${{index + 1}}.</span> ${{q.q}}</div>
                     <div class="options">
             `;
             
@@ -310,8 +391,6 @@ html_content = f"""<!DOCTYPE html>
         let scores = getScores();
         let resultsHTML = '';
         let correctCount = 0;
-        
-        // Reset wrong questions for the *next* potential retry
         let nextWrongQuestions = [];
 
         currentQuiz.forEach((q, idx) => {{
@@ -321,73 +400,57 @@ html_content = f"""<!DOCTYPE html>
 
             const isCorrect = (userVal === q.a);
             
-            // --- SCORING (Only if NOT in retry mode) ---
             if (!isRetryMode) {{
                 let oldScore = scores[q.id] || 0;
                 let newScore = oldScore;
-                
-                if (isCorrect) {{
-                    newScore = oldScore + 2;
-                }} else {{
-                    newScore = (oldScore === 1) ? 0 : 1;
-                }}
+                if (isCorrect) newScore = oldScore + 2;
+                else newScore = (oldScore === 1) ? 0 : 1;
                 scores[q.id] = newScore;
             }}
 
-            if (isCorrect) {{
-                correctCount++;
-            }} else {{
-                nextWrongQuestions.push(q);
-            }}
+            if (isCorrect) correctCount++;
+            else nextWrongQuestions.push(q);
 
-            // --- DISPLAY LOGIC ---
-            // Find text of correct answer
             let correctOpt = q.opts.find(o => o.id === q.a);
             let correctText = correctOpt ? correctOpt.text : q.a;
-
             let statusClass = isCorrect ? 'correct' : 'incorrect';
             let statusLabel = isCorrect ? 'Correct' : 'Incorrect';
             
-            // Only show detailed answer text if wrong (or if you want to confirm correct text too)
             let answerDisplay = isCorrect 
-                ? `<span class="ans-text">Answer: ${{(userVal ? (q.opts.find(o=>o.id==userVal)?.text || userVal) : "None")}}</span>`
+                ? `<span class="ans-text">Your answer: ${{(userVal ? (q.opts.find(o=>o.id==userVal)?.text || userVal) : "None")}}</span>`
                 : `<span class="ans-text">Correct Answer: <strong>${{correctText}}</strong></span>`;
 
             resultsHTML += `
                 <div class="result-row">
-                    <div style="margin-bottom:5px;"><strong>${{idx+1}}. ${{q.q}}</strong></div>
+                    <div style="font-family: 'Playfair Display', serif; font-size: 1.1em; margin-bottom: 8px;">
+                        ${{idx+1}}. ${{q.q}}
+                    </div>
                     <div class="status ${{statusClass}}">${{statusLabel}}</div>
                     ${{answerDisplay}}
                 </div>
             `;
         }});
 
-        // Save scores only if this was the first run
-        if (!isRetryMode) {{
-            saveScores(scores);
-        }}
+        if (!isRetryMode) saveScores(scores);
 
-        // Setup State for Next Step
         wrongQuestions = nextWrongQuestions;
         
-        // Render Results Screen
         document.getElementById('score-summary').textContent = `${{correctCount}} / ${{currentQuiz.length}} Correct`;
         document.getElementById('results-list').innerHTML = resultsHTML;
 
-        // Setup Buttons
         const actionArea = document.getElementById('action-area');
         if (wrongQuestions.length > 0) {{
-            document.getElementById('retry-msg').textContent = "You must clear all errors to finish.";
+            document.getElementById('retry-msg').textContent = "Review required for incorrect answers.";
             actionArea.innerHTML = `
-                <button onclick="startQuiz(true)" style="background:#ff9500;">
-                    Retry ${{wrongQuestions.length}} Incorrect Questions
+                <button onclick="startQuiz(true)" class="btn-retry">
+                    Retry ${{wrongQuestions.length}} Incorrect Items
                 </button>
             `;
         }} else {{
-            document.getElementById('retry-msg').textContent = "Excellent work!";
+            document.getElementById('retry-msg').textContent = "Excellent. Session complete.";
             actionArea.innerHTML = `
-                <button onclick="location.reload()" style="background:#34c759;">
-                    Start New Quiz
+                <button onclick="location.reload()">
+                    Start New Session
                 </button>
             `;
         }}
@@ -404,9 +467,10 @@ html_content = f"""<!DOCTYPE html>
     }}
 
     function resetData() {{
-        if(confirm("Delete all learning progress and weights?")) {{
+        if(confirm("This will erase all study history. Proceed?")) {{
             localStorage.removeItem(STORAGE_KEY);
-            alert("Done.");
+            alert("History cleared.");
+            location.reload();
         }}
     }}
 </script>
