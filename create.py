@@ -41,7 +41,7 @@ def parse_csv(filename):
             col_idx = i + 1
             val = row[col_idx]
             if pd.notna(val):
-                clean_text = re.sub(r'^[A-Ea-e]\)\s*', '', str(val)).strip()
+                clean_text = re.sub(r'^[A-Z](\s*[\)\.]|\s+)\s*', '', str(val)).strip()
                 options.append({'id': letter, 'text': clean_text})
 
         raw_correct = str(row[6]).strip().lower()
